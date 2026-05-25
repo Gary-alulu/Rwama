@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── DESIGN TOKENS ─────────────────────────────────────────────── */
+:root {
+  /* Brand palette */
+  --color-forest:     #123524;
+  --color-coffee:     #4E342E;
+  --color-cream:      #F6F1E9;
+  --color-gold:       #C8A96B;
+  --color-botanical:  #7DA27D;
+
+  /* Tints */
+  --color-forest-10:  rgba(18, 53, 36, 0.10);
+  --color-forest-20:  rgba(18, 53, 36, 0.20);
+  --color-forest-60:  rgba(18, 53, 36, 0.60);
+  --color-gold-20:    rgba(200, 169, 107, 0.20);
+  --color-gold-40:    rgba(200, 169, 107, 0.40);
+  --color-cream-80:   rgba(246, 241, 233, 0.80);
+  --color-white-10:   rgba(255, 255, 255, 0.10);
+  --color-white-15:   rgba(255, 255, 255, 0.15);
+
+  /* Typography */
+  --font-heading: 'Cormorant Garamond', 'Georgia', serif;
+  --font-body:    'Satoshi', 'Inter', system-ui, sans-serif;
+
+  /* Radius system */
+  --radius-container: 28px;
+  --radius-card:      24px;
+  --radius-widget:    22px;
+  --radius-button:    999px;
+
+  /* Shadows */
+  --shadow-luxury:    0 10px 30px rgba(0, 0, 0, 0.08);
+  --shadow-card:      0 2px 12px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover:0 16px 48px rgba(18, 53, 36, 0.14);
+  --shadow-gold:      0 0 24px rgba(200, 169, 107, 0.30);
+
+  /* Glassmorphism */
+  --glass-bg:         rgba(246, 241, 233, 0.08);
+  --glass-border:     1px solid rgba(255, 255, 255, 0.10);
+  --glass-blur:       blur(12px);
+
+  /* Motion */
+  --ease-luxury:      cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out-expo:    cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── BASE ───────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-forest);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--color-forest);
+  }
+
+  ::selection {
+    background: var(--color-gold-40);
+    color: var(--color-forest);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+/* ─── COMPONENT UTILITIES ────────────────────────────────────────── */
+@layer components {
+
+  /* Glassmorphism panel */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-container);
+  }
+
+  /* Dark glass variant — for overlays on video/images */
+  .glass-dark {
+    background: var(--color-forest-60);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-container);
+  }
+
+  /* Gold-tinted glass for premium highlights */
+  .glass-gold {
+    background: var(--color-gold-20);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--color-gold-40);
+    border-radius: var(--radius-container);
+  }
+
+  /* Cream card — default surface */
+  .card-surface {
+    background: #FFFFFF;
+    border: 1px solid rgba(18, 53, 36, 0.08);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.35s var(--ease-luxury),
+                transform 0.35s var(--ease-luxury);
+  }
+
+  .card-surface:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-4px);
+  }
+
+  /* Traceability ID monospace pill */
+  .trace-id {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    background: var(--color-forest-10);
+    color: var(--color-forest);
+    border-radius: 6px;
+    padding: 2px 8px;
+    display: inline-block;
+  }
+
+  /* Grade badge variants */
+  .badge-aa {
+    background: var(--color-forest);
+    color: var(--color-cream);
+    border-radius: var(--radius-button);
+    padding: 3px 12px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: inline-block;
+  }
+
+  .badge-ab {
+    background: var(--color-coffee);
+    color: var(--color-cream);
+    border-radius: var(--radius-button);
+    padding: 3px 12px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: inline-block;
+  }
+
+  .badge-pb {
+    background: var(--color-gold);
+    color: #2C1A08;
+    border-radius: var(--radius-button);
+    padding: 3px 12px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: inline-block;
+  }
+
+  /* Label utility */
+  .overline {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--font-body);
+  }
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(18, 53, 36, 0.2);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(18, 53, 36, 0.4);
+}
