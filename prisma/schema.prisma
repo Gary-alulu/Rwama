@@ -9,9 +9,22 @@ generator client {
 
 enum UserRole {
   ADMIN
+  SUPER_ADMIN
   FACTORY_MANAGER
+  FACTORY_STAFF
   FARMER
   BUYER
+  PLOT_SELLER
+  COOPERATIVE_STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_APPROVAL
+  PENDING
+  SUSPENDED
+  REJECTED
+  VERIFIED
 }
 
 enum CherryGrade {
@@ -37,34 +50,41 @@ enum ProcessingMethod {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?    @unique
   emailVerified DateTime?
   image         String?
-  role          UserRole  @default(BUYER)
+  role          UserRole   @default(BUYER)
+  status        UserStatus @default(PENDING_APPROVAL)
   accounts      Account[]
   sessions      Session[]
-  
-  farmerProfile        FarmerProfile?
-  buyerProfile         BuyerProfile?
-  factoryManagerProfile FactoryManagerProfile?
-  passwordHash         String?
+
+  farmerProfile           FarmerProfile?
+  buyerProfile            BuyerProfile?
+  factoryManagerProfile   FactoryManagerProfile?
+  plotSellerProfile       PlotSellerProfile?
+  cooperativeStaffProfile CooperativeStaffProfile?
+  passwordHash            String?
+
+  notifications       Notification[]
+  activityLogs        ActivityLog[]
+  traceabilityRecords TraceabilityRecord[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -100,48 +120,56 @@ model Factory {
   description        String
   latitude           Float?
   longitude          Float?
-  
-  managers           FactoryManagerProfile[]
-  farmers            FarmerProfile[]
-  deliveryLogs       DeliveryLog[]
-  batches            ProcessingBatch[]
+
+  managers     FactoryManagerProfile[]
+  farmers      FarmerProfile[]
+  deliveryLogs DeliveryLog[]
+  batches      ProcessingBatch[]
 }
 
 model FarmerProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  farmerId      String   @unique
-  nationalId    String   @unique
-  phoneNumber   String?
-  locationZone  String?
-  farmSizeAcres Float?
-  joinedYear    Int?
-  
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  factoryId     String
-  factory       Factory  @relation(fields: [factoryId], references: [id])
-  deliveryLogs  DeliveryLog[]
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  farmerId       String  @unique
+  nationalId     String  @unique
+  phoneNumber    String?
+  locationZone   String?
+  farmLocation   String?
+  farmSizeAcres  Float?
+  coffeeVariety  String?
+  paymentDetails Json?
+  joinedYear     Int?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  factoryId    String
+  factory      Factory       @relation(fields: [factoryId], references: [id])
+  deliveryLogs DeliveryLog[]
+  payments     Payment[]
 }
 
 model FactoryManagerProfile {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  employeeId String   @unique
+  id         String @id @default(cuid())
+  userId     String @unique
+  employeeId String @unique
   factoryId  String
-  
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  factory    Factory  @relation(fields: [factoryId], references: [id])
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  factory Factory @relation(fields: [factoryId], references: [id])
 }
 
 model BuyerProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  companyName String?
-  country     String?
-  licenseNo   String?
-  isVerified  Boolean  @default(false)
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  companyName       String?
+  country           String?
+  contactPerson     String?
+  sourcingInterests String[]
+  businessType      String?
+  licenseNo         String?
+  isVerified        Boolean  @default(false)
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inquiries MarketplaceInquiry[]
 }
 
 model DeliveryLog {
@@ -149,11 +177,11 @@ model DeliveryLog {
   weightKg     Float
   cherryGrade  CherryGrade
   deliveryDate DateTime    @default(now())
-  
-  farmerId     String
-  farmer       FarmerProfile @relation(fields: [farmerId], references: [id])
-  factoryId    String
-  factory      Factory       @relation(fields: [factoryId], references: [id])
+
+  farmerId  String
+  farmer    FarmerProfile @relation(fields: [farmerId], references: [id])
+  factoryId String
+  factory   Factory       @relation(fields: [factoryId], references: [id])
 }
 
 model CoffeeLot {
@@ -170,8 +198,10 @@ model CoffeeLot {
   priceUsdKg      Float
   cropYear        Int
   isAvailable     Boolean     @default(true)
-  
-  links           TraceabilityLink[]
+
+  links               TraceabilityLink[]
+  inquiries           MarketplaceInquiry[]
+  traceabilityRecords TraceabilityRecord[]
 }
 
 model ProcessingBatch {
@@ -182,20 +212,135 @@ model ProcessingBatch {
   processingDate    DateTime
   dryingDays        Int
   fermentationHours Int
-  
-  factoryId         String
-  factory           Factory          @relation(fields: [factoryId], references: [id])
-  
-  links             TraceabilityLink[]
+
+  factoryId String
+  factory   Factory @relation(fields: [factoryId], references: [id])
+
+  links TraceabilityLink[]
 }
 
 model TraceabilityLink {
   coffeeLotId       String
   processingBatchId String
   contributionPct   Float
-  
-  coffeeLot         CoffeeLot       @relation(fields: [coffeeLotId], references: [id])
-  processingBatch   ProcessingBatch @relation(fields: [processingBatchId], references: [id])
-  
+
+  coffeeLot       CoffeeLot       @relation(fields: [coffeeLotId], references: [id])
+  processingBatch ProcessingBatch @relation(fields: [processingBatchId], references: [id])
+
   @@id([coffeeLotId, processingBatchId])
+}
+
+model PlotSellerProfile {
+  id          String               @id @default(cuid())
+  userId      String               @unique
+  phoneNumber String?
+  listings    MarketplaceListing[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CooperativeStaffProfile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  employeeId String  @unique
+  department String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  farmerId    String
+  amount      Float
+  status      PaymentStatus @default(PENDING)
+  paymentDate DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  referenceId String?       @unique
+
+  farmer FarmerProfile @relation(fields: [farmerId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MarketplaceListing {
+  id          String   @id @default(cuid())
+  sellerId    String
+  title       String
+  description String
+  price       Float
+  acreage     Float?
+  location    String?
+  images      String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller PlotSellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+enum InquiryStatus {
+  PENDING
+  REVIEWED
+  RESPONDED
+  CLOSED
+}
+
+model MarketplaceInquiry {
+  id          String        @id @default(cuid())
+  buyerId     String
+  coffeeLotId String
+  message     String
+  status      InquiryStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  buyer     BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  coffeeLot CoffeeLot    @relation(fields: [coffeeLotId], references: [id], onDelete: Cascade)
+}
+
+enum TraceabilityStage {
+  HARVESTED
+  WASHED
+  DRIED
+  SORTED
+  PACKAGED
+  EXPORTED
+}
+
+model TraceabilityRecord {
+  id           String            @id @default(cuid())
+  lotId        String
+  stage        TraceabilityStage
+  timestamp    DateTime          @default(now())
+  recordedById String
+  notes        String?
+
+  coffeeLot  CoffeeLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  recordedBy User      @relation(fields: [recordedById], references: [id])
 }

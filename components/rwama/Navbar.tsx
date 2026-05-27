@@ -1,60 +1,81 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { LuxuryButton } from './LuxuryButton'
+import { AnimatePresence, motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { LuxuryButton } from "./LuxuryButton";
 
 const NAV_LINKS = [
-  { label: 'Our Factories',  href: '/factories'   },
-  { label: 'Marketplace',    href: '/marketplace'  },
-  { label: 'Our Story',      href: '/story'        },
-  { label: 'Traceability',   href: '/traceability' },
-]
+  { label: "Our Factories", href: "/factories" },
+  { label: "Marketplace", href: "/marketplace" },
+  { label: "Our Story", href: "/story" },
+  { label: "Traceability", href: "/traceability" },
+];
 
 export function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const getDashboardLink = () => {
+    if (!session?.user?.role) return "/dashboard/farmer";
+    const role = session.user.role;
+    if (role === "ADMIN") return "/dashboard/admin";
+    if (role === "FACTORY_MANAGER") return "/dashboard/factory";
+    if (role === "BUYER") return "/dashboard/buyer";
+    if (role === "PLOT_SELLER") return "/dashboard/plot-seller";
+    if (role === "COOPERATIVE_STAFF") return "/dashboard/cooperative-staff";
+    return "/dashboard/farmer";
+  };
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 32)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Close mobile menu on route change
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   return (
     <>
       <motion.header
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 50, damping: 20, delay: 0.1 }}
+        transition={{ type: "spring", stiffness: 50, damping: 20, delay: 0.1 }}
         className={`
           fixed top-0 left-0 right-0 z-[100]
           transition-all duration-500 ease-[var(--ease-luxury)]
-          ${scrolled
-            ? 'bg-[var(--color-forest-60)] backdrop-blur-[12px] border-b border-[var(--color-white-10)] py-3'
-            : 'bg-transparent py-5'
+          ${
+            scrolled
+              ? "bg-[var(--color-forest-60)] backdrop-blur-[12px] border-b border-[var(--color-white-10)] py-3"
+              : "bg-transparent py-5"
           }
         `}
       >
         <div className="max-w-[1320px] mx-auto px-6 flex items-center justify-between">
-
           {/* Wordmark */}
           <Link href="/" className="flex items-center gap-3 group">
             <span
               className="text-[28px] tracking-[-0.02em] leading-none"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-cream)' }}
+              style={{
+                fontFamily: "var(--font-heading)",
+                color: "var(--color-cream)",
+              }}
             >
               Rwama
             </span>
             <span
               className="text-[10px] tracking-[0.18em] uppercase opacity-60 mt-1"
-              style={{ fontFamily: 'var(--font-body)', color: 'var(--color-gold)' }}
+              style={{
+                fontFamily: "var(--font-body)",
+                color: "var(--color-gold)",
+              }}
             >
               Coffee
             </span>
@@ -68,9 +89,10 @@ export function Navbar() {
                 href={link.href}
                 className={`
                   text-[13px] tracking-[0.04em] transition-colors duration-200
-                  ${pathname.startsWith(link.href)
-                    ? 'text-[var(--color-gold)]'
-                    : 'text-[rgba(246,241,233,0.75)] hover:text-[var(--color-cream)]'
+                  ${
+                    pathname.startsWith(link.href)
+                      ? "text-[var(--color-gold)]"
+                      : "text-[rgba(246,241,233,0.75)] hover:text-[var(--color-cream)]"
                   }
                 `}
               >
@@ -82,16 +104,26 @@ export function Navbar() {
           {/* CTA + mobile toggle */}
           <div className="flex items-center gap-4">
             <div className="hidden md:block">
-              <LuxuryButton href="/marketplace" size="sm" variant="gold">
-                View Lots
-              </LuxuryButton>
+              {session ? (
+                <LuxuryButton
+                  href={getDashboardLink()}
+                  size="sm"
+                  variant="gold"
+                >
+                  Dashboard
+                </LuxuryButton>
+              ) : (
+                <LuxuryButton href="/auth/login" size="sm" variant="gold">
+                  Sign In
+                </LuxuryButton>
+              )}
             </div>
 
             {/* Mobile hamburger */}
             <button
               onClick={() => setMenuOpen((v) => !v)}
               className="md:hidden flex flex-col gap-[5px] p-2"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
             >
               {[0, 1, 2].map((i) => (
                 <motion.span
@@ -99,9 +131,11 @@ export function Navbar() {
                   className="block w-5 h-[1.5px] bg-[var(--color-cream)] origin-center"
                   animate={
                     menuOpen
-                      ? i === 0 ? { rotate: 45, y: 6.5 }
-                      : i === 1 ? { opacity: 0, scaleX: 0 }
-                      : { rotate: -45, y: -6.5 }
+                      ? i === 0
+                        ? { rotate: 45, y: 6.5 }
+                        : i === 1
+                          ? { opacity: 0, scaleX: 0 }
+                          : { rotate: -45, y: -6.5 }
                       : { rotate: 0, y: 0, opacity: 1, scaleX: 1 }
                   }
                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
@@ -117,10 +151,10 @@ export function Navbar() {
         {menuOpen && (
           <motion.div
             key="mobile-menu"
-            initial={{ opacity: 0, x: '100%' }}
+            initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', stiffness: 50, damping: 20 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ type: "spring", stiffness: 50, damping: 20 }}
             className="fixed inset-y-0 right-0 w-[280px] z-[90]
                        bg-[var(--color-forest)] flex flex-col pt-24 px-8 pb-10"
           >
@@ -130,21 +164,39 @@ export function Navbar() {
                   key={link.href}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 * i, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{
+                    delay: 0.05 * i,
+                    duration: 0.35,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 >
                   <Link
                     href={link.href}
                     className="block text-[22px] text-[var(--color-cream)] hover:text-[var(--color-gold)] transition-colors"
-                    style={{ fontFamily: 'var(--font-heading)' }}
+                    style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {link.label}
                   </Link>
                 </motion.div>
               ))}
             </nav>
-            <LuxuryButton href="/marketplace" variant="gold" className="w-full justify-center">
-              View Lots
-            </LuxuryButton>
+            {session ? (
+              <LuxuryButton
+                href={getDashboardLink()}
+                variant="gold"
+                className="w-full justify-center"
+              >
+                Dashboard
+              </LuxuryButton>
+            ) : (
+              <LuxuryButton
+                href="/auth/login"
+                variant="gold"
+                className="w-full justify-center"
+              >
+                Sign In
+              </LuxuryButton>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -163,5 +215,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
